@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+<style>
+  #map {
+    height: 300px;
+  }
+</style>
+{% endblock css %}
+
+
+{% block body %}
+<div class="container mt-3">
+    <h1 class="text-center">Offer Info: {{offer.id}}</h1>
+    <hr>
+    <div class="container mt-3">
+          <div class="form-row">
+            <div class="form-group col-md-8">
+              <label for="input_product">Product</label>
+              <select name='product' id="input_product" class="form-control" disabled>
+                <option disabled selected value>{{offer.supplier.product.name}}</option>
+              </select>
+            </div>
+            <div class="form-group col-md-4">
+              <label for="input_region">Supplier Department</label>
+              <select id="input_region" name="region" class="form-control" disabled>
+                <option disabled selected value>{{offer.supplier.region.name}}</option>
+              </select>
+            </div>
+          </div>
+          <hr>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="input_company_name">Company Name</label>
+                    <input required type="text" class="form-control" name='company_name' id="input_company_name" placeholder="" value="{{offer.supplier.company_name}}" disabled>
+                </div>
+                <div class="form-group col-md-6">
+                    <label required for="input_contact_name">Contact Name</label>
+                    <input type="text" class="form-control" name="contact_name" id="input_contact_name" placeholder="" value="{{offer.supplier.contact_name}}" disabled>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="input_landline">Landline</label>
+                    <input type="text" class="form-control" name="landline" id="input_landline" placeholder="" value="{{offer.supplier.landline}}" disabled>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="input_mobile">Mobile</label>
+                    <input type="text" class="form-control" name="mobile" id="input_mobile" placeholder="" value="{{offer.supplier.mobile}}" disabled>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="input_email">Email</label>
+                    <input required type="email" class="form-control" name="email" id="input_email" placeholder="" value="{{offer.supplier.email}}" disabled>
+                </div>
+                <div class="form-group col-md-5">
+                    <label for="input_identifier">Identifier</label>
+                    <input type="text" class="form-control" name="identifier" id="input_identifier" placeholder="" value="{{offer.supplier.identifier}}" disabled>
+                </div>
+                <div class="form-group col-md-7">
+                    <label for="input_format"> Format</label>
+                    <input required type="text" class="form-control" name="format" id="input_format" placeholder="" value="{{offer.supplier.format}}" disabled>
+                </div>
+                <div class="form-group col-md-12">
+                    <label for="input_comments">Comments</label>
+                    <input required type="email" class="form-control" name="comments" id="input_comments" placeholder="" value="{{offer.supplier.comments}}" disabled>
+                </div>
+              </div>
+              <hr>
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <div class="form-row row">
+                  <label for="input_price" class="col-12">Offered Price To Destination</label>
+                    <input required type="number" class="form-control col-11" name="price" id="input_price" placeholder="" value="{{offer.offer_m_price|floatformat:2}}" disabled><span class="col-1 mt-2 text-bold text-lg">€</span>
+                  </div>
+                </div>
+                <div class="form-group col-md-6">
+                  <div class="form-row row">
+                  <label for="input_price" class="col-12">Selling Price</label>
+                    <input required type="number" class="form-control col-11" name="price" id="input_price" placeholder="" value="{{offer.supplier.price_exws|floatformat:2}}" disabled><span class="col-1 mt-2 text-bold text-lg">€</span>
+                  </div>
+                </div>
+              </div>
+                <div id="map">
+                </div>
+              <hr>
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="input_certifications">Certifications</label>
+                  {% for certification in offer.supplier.certifications.all %}
+                    <br><a href="{{certification.file.url}}">{{certification.file.name}}</a>
+                  {% endfor %}
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="input_specifications">Specifications</label>
+                    {% for specification in offer.supplier.specifications.all %}
+                    <br><a href="{{specification.file.url}}">{{specification.file.name}}</a>
+                  {% endfor %}
+                </div>
+              </div>
+              <hr>
+            </div>
+            {% if supplier_prices %}
+            <h2 class="text-center">Price History</h2>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Added By</th>
+                  <th scope="col">Selling Price</th>
+                  <th scope="col">Buying Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                  {% for prices in supplier_prices %}
+                  <tr>
+                    <td>{{prices.added_on.date}}</td>
+                    <td>{{prices.added_by.username}}</td>
+                    <td>{{prices.price_exws|floatformat:2}}</td>
+                    <td>{{prices.price_exwb|floatformat:2}}</td>
+                  </tr>
+                  {% endfor %}
+                
+              </tbody>
+            </table>
+            {% endif %}
+  </div>
+{% endblock body %}
+
+{% block js %}
+<script>
+    var destination_address_icon = L.icon({
+    iconUrl: '{% static "markers/destination.png" %}',
+    });
+    var departure_address_icon = L.icon({
+    iconUrl: '{% static "markers/departure.png" %}',
+    });
+  
+    var map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var marker_destination = L.marker([
+      {{offer.region.center_lat}}, {{offer.region.center_lng}}
+    ], {icon: destination_address_icon}).bindPopup("Destination").addTo(map);
+
+    var marker_departure = L.marker([
+      {{offer.supplier.departure_address_lat}}, {{offer.supplier.departure_address_lng}}
+    ], {icon: departure_address_icon}).bindPopup("Departure").addTo(map);
+
+    groups = L.featureGroup([marker_destination, marker_departure]);
+    map.fitBounds(groups.getBounds());
+  
+</script>
+{% endblock js %}

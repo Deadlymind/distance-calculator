@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+
+{% block body %}
+
+    <div class="container mt-3">
+        <form action="" method="get">
+            <div class="form-row">
+                <div class="form-group col-md-8">
+                    <select name='country' id="input_country" class="form-control" required>
+                        {% for c in countries %}
+                        {% if c == country %}
+                        <option value="{{c.id}}" selected>{{c.name}}</option>
+                        {% else %}
+                        <option value="{{c.id}}">{{c.name}}</option>
+                        {% endif %}
+
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <button class="btn btn-success">Fetch Regions</button>
+                </div>
+                <div class="form-group col-md-2">
+                    <a href="{% url 'countries:country_create'%}" class="btn btn-primary">Add Country</a>
+                </div>
+            </div>
+        </form>
+
+        <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Department</th>
+                <th scope="col">Price(Km)</th>
+                <th scope="col">Distance To Apply Coefficient(Km)</th>
+                <th scope="col">Coefficient Price(Km)</th>
+                <th scope="col"></th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+                    <tr>
+                        <th class="text-center" colspan="5"><h1 class="text-bold">{{country.name.title}}</h1></th>
+                        <th>
+                            <a class="btn btn-dark col-12 p-2" href="{% url 'countries:country_update' country.id %}"><span class="text">Manage</span></a><br>
+                        </th>
+                    </tr>
+                    {% for region in country.get_regions %}
+                    <form action="." method="post">{% csrf_token %}
+                        <tr>
+                            <th scope="row">{{region.name}}</th>
+                            <td hidden><input type="hidden" hidden name="id" value="{{region.id}}"></td>
+                            <td><input type="number" step="0.01" name="price" value="{{region.price}}" class="form-control"></td>
+                            <td><input type="number" step="0.01" name="coefficient_distance" value="{{region.coefficient_distance}}" class="form-control"></td>
+                            <td><input type="number" step="0.01" name="coefficient_price" value="{{region.coefficient_price}}" class="form-control"></td>
+                            <td><button class="btn btn-success p-4">Update</button></td>
+                            <td>
+                                <a class="btn btn-warning btn-sm col-12 mb-1" href="{% url 'countries:region_edit_location' region.id %}"><span class="text text-sm">Edit Location</span></a>
+                                <a class="btn btn-danger btn-sm col-12" href="{% url 'countries:region_delete' region.id %}"><span class="text text-sm">Remove Department</span></a><br>
+                            </td>
+                        </tr>
+                    </form>
+                    {% endfor %}
+                    <tr>
+                        <th class="text-center" colspan="6"><a href="{% url 'countries:region_create' country.id%}" class="btn btn-secondary col-12">Add Department</a></th>
+                    </tr>
+            </tbody>
+          </table>
+    </div>
+
+{% endblock body %}

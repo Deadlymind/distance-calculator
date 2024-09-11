@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+
+{% block body %}
+
+    <div class="container">
+        <h1 class="text-center my-5">Manage Users</h1>
+        <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">username</th>
+                <th scope="col">Email</th>
+                <th scope="col">Team</th>
+                <th scope="col">Active</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <form action="." method="post">{% csrf_token %}
+                    <tr>
+                        <th scope="row" hidden><input type="text" hidden name="id" value="{{user.id}}"></th>
+                        <th scope="row">{{user.username}}</th>
+                        <td>{{user.email}}</td>
+                        <td>
+                            <select class="form-control" id="input_team" name="team" required>
+                                <option value="admin" {% if user.is_superuser %} selected {% endif%} >Admin</option>
+                                <option value="sourcing" {% if not user.is_superuser and user.team == 'sourcing' %} selected {% endif%} >Sourcing</option>
+                                <option value="sales" {% if not user.is_superuser and user.team == 'sales' %} selected {% endif%}>Sales</option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" name="is_active" id="customSwitch{{user.id}}" {% if user.is_active %}checked{% endif %}>
+                                <label class="custom-control-label" for="customSwitch{{user.id}}"></label>
+                            </div>
+                        </td>
+                        <td>
+                            <button type="submit" class="btn btn-success">Update</button>
+                        </td>
+                        
+                      </tr>
+                </form>
+                {% endfor %}
+                <tr>
+                    <td colspan="5"><a href="{% url 'accounts:create' %}" class="col-12 btn btn-primary">Create User</a></td>
+                </tr>
+            </tbody>
+          </table>
+    </div>
+
+{% endblock body %}
+
+{% block js %}
+
+{% endblock js%}

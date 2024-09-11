@@ -1,0 +1,55 @@
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th scope="col"></th>
+            <th scope="col">Price</th>
+            <th scope="col">Company</th>
+            <th scope="col">DIF</th>
+            <th scope="col">Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th scope="row">FP1</th>
+            {% if offers_details.FP1 %}
+                <td>{{offers_details.FP1.offer_f_price|floatformat:2}}</td>
+                <td>{{offers_details.FP1.supplier.company_name}}</td>
+                <td></td>
+                <td>{{offers_details.FP1.supplier.get_supplier_prices.0.added_on.date|date:"d/m/Y"}}</td>
+            {% else %}
+                <td class='text-center' colspan="4">Not Found</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <th scope="row"></th>
+                <td colspan="4"></td>
+        </tr>
+        <tr>
+            {% if offers_details.M1 %}
+                <th scope="row">M1</th>
+                <td>{{offers_details.M1.offer_m_price|floatformat:2}}</td>
+                <td>{{offers_details.M1.supplier.company_name}}</td>
+                <td></td>
+            <td>{{offers_details.M1.supplier.get_supplier_prices.0.added_on.date|date:"d/m/Y"}}</td>
+            {% endif %}
+        </tr>
+        <tr>
+            {% if offers_details.M2 %}
+                <th scope="row">M2</th>
+                <td>{{offers_details.M2.offer_m_price|floatformat:2}}</td>
+                <td>{{offers_details.M2.supplier.company_name}}</td>
+                <td>({{offers_details.DIF1|floatformat:2}})</td>
+                <td>{{offers_details.M2.supplier.get_supplier_prices.0.added_on.date|date:"d/m/Y"}}</td>
+            {% endif %}
+        </tr>
+        <tr>
+            {% if offers_details.M3 %}
+                <th scope="row">M3</th>
+                <td>{{offers_details.M3.offer_m_price|floatformat:2}}</td>
+                <td>{{offers_details.M3.supplier.company_name}}</td>
+                <td>({{offers_details.DIF2|floatformat:2}})</td>
+                <td>{{offers_details.M3.supplier.get_supplier_prices.0.added_on.date|date:"d/m/Y"}}</td>
+            {% endif %}
+        </tr>
+    </tbody>
+</table>

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+
+{% block body %}
+<div class="container">
+    <h1 class="text-center">Create Unit</h1>
+    <form action="" method="post">{% csrf_token %}
+        <div class="form-group">
+            <label for="input_name">Name:</label>
+            <input type="text" class="form-control" name="name" id="input_name" placeholder="Kg, Bottle, tonne, etc" required>
+        </div>
+        <button class="btn btn-primary col-12" type="submit">Create Unit</button>
+    </form>
+</div>
+{% endblock body %}

@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+<style>
+  #map {
+    height: 400px;
+  }
+</style>
+{% endblock css %}
+
+{% block body %}
+<div class="container mt-3">
+    <form action="." method="get">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="input_product">Product</label>
+                <select name='product' id="input_product" class="form-control" required>
+                    {% if selected_product %}
+                        <option selected value="{{selected_product.id}}">{{selected_product.name}}</option>
+                    {% else %}
+                        <option disabled selected value>Select Product</option>
+                    {% endif %}
+                {% for product in products %}
+                <option value="{{product.id}}">{{product.name}}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="input_product">Country</label>
+                <select name='country' id="input_country" class="form-control" required>
+                {% if selected_country %}
+                <option selected value={{selected_country.id}}>{{selected_country.name.title}}</option>
+                {% else %}
+                <option disabled selected value>Select Country</option>
+                {% endif %}
+                {% for country in countries %}
+                <option value="{{country.id}}">{{country.name.title}}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="input_product">Department</label>
+                <select name='region' id="input_region" class="form-control">
+                {% if selected_region %}
+                    <option selected value={{selected_region.id}}>{{selected_region.name}}</option>
+                {% else %}
+                    <option selected value>All Departments</option>
+                {% endif %}
+                </select>
+            </div>
+            <div class="form-group col-md-12">
+                <button class="btn btn-success text-center col-12">Search Suppliers</button>
+            </div>
+        </div>
+    </form>
+    <hr>
+    <div id="map"></div>
+    <hr>
+    <div class="col-12">
+        <div class="row">
+        {% for region in destination_markers %}
+            <div class="col-6 mb-5 ">
+                <div class="media">
+                    <div class="media-body px-3">
+                        <h3 class="font-weight-bold">{{region.name}}</h1>
+                        {% for region_id, offers_details in offers_details_by_region.items %}
+                        {% if region_id == region.id  %}
+                            <!-- {% if "FP1" in offers_details %}<h6 class="">FP1 - {{offers_details.FP1.supplier.company_name}}: Offered: {{offers_details.FP1.offer_f_price|floatformat:2}}</h6>{% endif %}
+                            {% if "M1" in offers_details %}<h6 class="" style="color: {{offers_details.M_COLOR_1}};">M1 - {{offers_details.M1.supplier.company_name}}: Offered: {{offers_details.M1.offer_m_price|floatformat:2}}</h6>{% endif %}
+                            {% if "DIF1" in offers_details %}<h6 class="">DIF1 - {{offer_details.DIF1|floatformat:2}}</h6>{% endif %}
+                            {% if "M2" in offers_details %}<h6 class="" style="color: {{offers_details.M_COLOR_1}};">M2 - {{offers_details.M2.supplier.company_name}}: Offered: {{offers_details.M2.offer_m_price|floatformat:2}}</h6>{% endif %}
+                            {% if "DIF2" in offers_details %}<h6 class="">DIF2 - {{offer_details.DIF2|floatformat:2}}</h6>{% endif %}
+                            {% if "M3" in offers_details %}<h6 class="" style="color: {{offers_details.M_COLOR_1}};">M3 - {{offers_details.M3.supplier.company_name}}: Offered: {{offers_details.M3.offer_m_price|floatformat:2}}</h6>{% endif %} -->
+
+
+                            {% if "M1" in offers_details %}<span><b style="color: {{offers_details.M_COLOR_1}};">M1</b> ({{offers_details.M1.offer_m_price|floatformat:2}}) - {{offers_details.M1.supplier.company_name}} //{% endif %} <b>FP1</b> {% if offers_details.FP1 %} ({{offers_details.FP1.offer_f_price|floatformat:2}}) - {{offers_details.FP1.supplier.company_name}}{% else %}(Not Found){% endif %}</span><br>
+                            {% if "M2" in offers_details %}<span><b style="color: {{offers_details.M_COLOR_2}};">M2</b> ({{offers_details.M2.offer_m_price|floatformat:2}}) - {{offers_details.M2.supplier.company_name}} // <b>DIF</b> ({{offers_details.DIF1|floatformat:2}}) </span><br>{% endif %}
+                            {% if "M3" in offers_details %}<span><b style="color: {{offers_details.M_COLOR_3}};">M3</b> ({{offers_details.M3.offer_m_price|floatformat:2}}) - {{offers_details.M3.supplier.company_name}} // <b>DIF</b> ({{offers_details.DIF2|floatformat:2}}) </span><br>{% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="align-self-center">
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock body %}
+
+{% block js %}
+
+
+
+
+<script>
+    var destination_address_icon = L.icon({
+    iconUrl: '{% static "markers/destination.png" %}',
+    });
+    var departure_address_icon = L.icon({
+    iconUrl: '{% static "markers/departure.png" %}',
+    });
+    regions = {
+        {% if selected_country %}
+        {{selected_country.id}}: [
+                {% for region in selected_country.get_regions %}
+                    { value: {{region.id}}, text: '{{region.name}}' },
+                {% endfor %}
+            ],  
+        {% endif %}
+        {% for country in countries %}
+            {{country.id}}: [
+                {% for region in country.get_regions %}
+                    { value: {{region.id}}, text: '{{region.name}}' },
+                {% endfor %}
+            ],  
+        {% endfor %}
+    }
+    console.log(regions);
+
+    $("#input_country").change(function(){
+        const selectedValue = $(this).val();
+        const $select2 = $('#input_region');
+        $select2.empty();
+
+        $select2.empty().append('<option selected value>All Deaprtments</option>');
+        console.log(selectedValue)
+        console.log(regions[selectedValue])
+        regions[selectedValue].forEach(option => {
+                $select2.append(new Option(option.text, option.value));
+            });
+    })
+    {% if selected_country %}
+    const selectedValue = $("#input_country").val();
+        const $select2 = $('#input_region');
+        regions[selectedValue].forEach(option => {
+                $select2.append(new Option(option.text, option.value));
+    });
+    {% endif %}
+</script>
+
+<script>
+    var map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    {% if destination_markers %}
+        {% for destination_marker in destination_markers %}
+            var marker_destination_{{destination_marker.id}} = L.marker([
+                {{destination_marker.center_lat}}, {{destination_marker.center_lng}}
+            ], {icon: destination_address_icon}).bindPopup(
+                {% for region_id, offers_details in offers_details_by_region.items %}
+                    {% if region_id == destination_marker.id %}
+
+                `<h6 class='text-center'>{{destination_marker.name}}</h6><hr>
+                <span>M1 ({{offers_details.M1.offer_m_price|floatformat:2}}) - {{offers_details.M1.supplier.company_name}}  // FP1 {% if offers_details.FP1 %} ({{offers_details.FP1.offer_f_price|floatformat:2}}) - {{offers_details.FP1.supplier.company_name}}{% else %}(Not Found){% endif %}</span><br>
+                <span>M2 ({{offers_details.M2.offer_m_price|floatformat:2}}) - {{offers_details.M2.supplier.company_name}} // DIF ({{offers_details.DIF1|floatformat:2}}) </span><br>
+                <span>M3 ({{offers_details.M3.offer_m_price|floatformat:2}}) - {{offers_details.M3.supplier.company_name}} // DIF ({{offers_details.DIF2|floatformat:2}}) </span><br>
+                `
+                {% endif %}
+                {% endfor %}
+
+            ).addTo(map);
+            {% for region_id, offers in offers_details_by_region.items %}
+                {% if region_id == destination_marker.id  %}
+                    {% for offer in offers %}
+                        var marker_departure_{{offer.id}} = L.marker([
+                            {{offer.supplier.departure_address_lat}}, {{offer.supplier.departure_address_lng}}
+                        ], {icon: departure_address_icon}).bindPopup(
+                            `M{{forloop.counter}}({{offer.region.name}}) - {{offer.supplier.company_name}}<br>
+                            Offered: {{offer.offer_m_price|floatformat:2}}
+                            `
+                        ).addTo(map);
+                    {% endfor %}
+                {% endif  %}
+            {% endfor %}
+        {% endfor %}
+
+        var group = L.featureGroup(
+            [{% for destination_marker in destination_markers %}marker_destination_{{destination_marker.id}}, {% endfor %}
+                {%for offers in offers_by_region.values %}{% for offer in offers %}marker_departure_{{offer.id}},{%endfor%}{%endfor%}
+            ]
+        );
+        map.fitBounds(group.getBounds());
+
+    {% endif %}
+  </script>
+
+{% endblock js %}

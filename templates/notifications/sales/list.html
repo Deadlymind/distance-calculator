@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body %}
+<div class="container mt-3">
+    <h1 class="text-center">Notifications(Sales)</h1>
+    <hr>
+    <form action="." method="get">
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="input_product">Product</label>
+                <select name='product' id="input_product" class="form-control" required>
+                    {% if selected_product %}
+                        <option selected value="{{selected_product.id}}">{{selected_product.name}}</option>
+                    {% else %}
+                        <option disabled selected value>Select Product</option>
+                    {% endif %}
+                {% for product in products %}
+                <option value="{{product.id}}">{{product.name}}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="input_product">Country</label>
+                <select name='country' id="input_country" class="form-control" required>
+                {% if selected_country %}
+                <option selected value={{selected_country.id}}>{{selected_country.name.title}}</option>
+                {% else %}
+                <option disabled selected value>Select Country</option>
+                {% endif %}
+                {% for country in countries %}
+                <option value="{{country.id}}">{{country.name.title}}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-12">
+                <button class="btn btn-success text-center col-12">Show Notifications</button>
+            </div>
+        </div>
+    </form>
+    <hr>
+    {% for notification in notifications %}
+    <div class="media">
+        <div class="media-body">
+          <h5 class="mt-0 text {{notification.color}}"><b>Offer: </b>{{notification.notification_offer.supplier.contact_name}}<b>,</b> {{notification.notification_offer.supplier.company_name}}<b>,</b> {{notification.notification_offer.price_exws|floatformat:2}}(Selling Price)</h5><br>
+          <span><b>Geography:</b> {{notification.notification_offer.region.country.name.title}}, {{notification.notification_offer.region.name}}</span><br>
+          <span><b>FP1:</b> {{notification.FP1.supplier.contact_name}},&nbsp;&nbsp;&nbsp;{{notification.FP1.supplier.company_name}},&nbsp;&nbsp;&nbsp; {{notification.FP1.price_exwb|floatformat:2}}</span><br>
+          <span><b>M1:</b> {{notification.M1.supplier.contact_name}},&nbsp;&nbsp;&nbsp;{{notification.M1.supplier.company_name}},&nbsp;&nbsp;&nbsp; {{notification.M1.price_exwb|floatformat:2}}</span><br>
+          <span><b>M2:</b> {{notification.M2.supplier.contact_name}},&nbsp;&nbsp;&nbsp;{{notification.M2.supplier.company_name}},&nbsp;&nbsp;&nbsp; {{notification.M2.price_exwb|floatformat:2}}&nbsp;&nbsp; // DIF1 {{notification.DIF1|floatformat:2}}</span><br>
+          <span><b>M3:</b> {{notification.M3.supplier.contact_name}},&nbsp;&nbsp;&nbsp;{{notification.M3.supplier.company_name}},&nbsp;&nbsp;&nbsp; {{notification.M3.price_exwb|floatformat:2}}&nbsp;&nbsp; // DIF2 {{notification.DIF2|floatformat:2}}</span><br>
+          <span class="mb-0"></span>
+        </div>
+      </div>
+      <hr>
+    {% endfor %}
+</div>
+{% endblock body %}

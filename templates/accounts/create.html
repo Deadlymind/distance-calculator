@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+
+{% block body %}
+<div class="container">
+    <h1 class="text-center">Create User</h1>
+    <form action="" method="post">{% csrf_token %}
+        <div class="form-group">
+            <label for="input_name">Username:</label>
+            <input type="text" class="form-control" name="username" id="input_username" placeholder="" required>
+            <small id="passwordHelpBlock" class="form-text text-danger">{{error}}</small>
+        </div>
+        <div class="form-group">
+            <label for="input_email">Email:</label>
+            <input type="text" class="form-control" name="email" id="input_email" placeholder="" required>
+        </div>
+        <div class="form-group">
+            <label for="input_password">Password:</label>
+            <input type="text" class="form-control" name="password" id="input_password" placeholder="" disabled value="abcd1234">
+        </div>
+        <div class="form-group">
+            <label for="input_unit">Team</label>
+            <select class="form-control" id="input_unit" name="team" required>
+                <option value="sourcing">Sourcing</option>
+                <option value="sales">Sales</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+        <button class="btn btn-primary col-12" type="submit">Create User</button>
+    </form>
+</div>
+{% endblock body %}

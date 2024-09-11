@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+
+{% block body %}
+<div class="container">
+    <h1 class="text-center">Liste of suppliers</h1>
+    {% if request.user.is_superuser %}
+    <h1><a class='btn btn-success text-center col-12' href="{% url 'suppliers:create_by_sourcing' %}">Create Suppliers(Sourcing)</a></h1>
+    <h1><a style='background-color: purple;' class='btn btn-success text-center col-12' href="{% url 'suppliers:create_by_sales' %}">Create Suppliers(Sales)</a></h1>
+    {% elif request.user.team == 'sourcing' %}
+    <h1><a class='btn btn-success text-center col-12' href="{% url 'suppliers:create_by_sourcing' %}">Create Suppliers(Sourcing)</a></h1>
+    {% elif request.user.team == 'sales' %}
+    <h1><a class='btn btn-success text-center col-12' href="{% url 'suppliers:create_by_sales' %}">Create Suppliers(Sales)</a></h1>
+    {% endif %}
+    <hr>
+    <form action="." method="get">
+        <div class="form-row align-items-center">
+            <div class="col-5">
+                <input type="text" class="form-control" id="searhInput" name="search" placeholder="Search By Supplier Company Name, Contact Name, Identifier" value="{{search}}">
+            </div>
+            <div class="col-3">
+                <label class="sr-only" for="search">Product</label>
+                <select name='product' id="input_product" class="form-control">
+                    <option value>All Products</option>
+                    {% if selected_product %}
+                        <option selected value="{{selected_product.id}}">{{selected_product.name}}</option>
+                    {% endif %}
+                    {% for product in products %}
+                        <option value="{{product.id}}">{{product.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-3">
+                <label class="sr-only" for="search">Country</label>
+                <select name='country' id="input_country" class="form-control">
+                    <option value>All Countries</option>
+                    {% if selected_country %}
+                        <option selected value="{{selected_country.id}}">{{selected_country.name.title}}</option>
+                    {% endif %}
+                    {% for country in countries %}
+                        <option value="{{country.id}}">{{country.name.title}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-1">
+                <button type="submit" class="btn btn-primary col-12">Search</button>
+            </div>
+        </div>
+    </form>
+    <hr>
+    {%for supplier in suppliers %}
+    <div class="col-12 mb-5">
+        <div class="media">
+            <div class="media-body px-3">
+                <h1 class="font-weight-bold">{{supplier.company_name}} ({{supplier.contact_name}}) - {{supplier.product.name}}</h1>
+                <h6 class="">Contact: {{supplier.landline}}, {{supplier.mobile}}, {{supplier.email}}</h6>
+                <h6 class="">Location: {{supplier.region.name}}, {{supplier.region.country.name.title}}</h6>
+                <h6 class="">Margin: {{supplier.margin}}</h6>
+                <h6 class="">Price[EXWB]: {{supplier.price_exwb|floatformat:2}}, ({{supplier.supplier_prices.last.added_on.date}})</h6>
+                <h6 class="">Price[EXWS]: {{supplier.price_exws|floatformat:2}}, ({{supplier.supplier_prices.last.added_on.date}})</h6>
+                <h6 class="">Added By: {{supplier.added_by.username}} ({{supplier.added_by.team}})</h6>
+            </div>
+            <div class="align-self-center">
+                <a type="button" href="{% url 'suppliers:add_price_by_sourcing' supplier.id %}" class="btn btn-primary font-weight-bold mb-1 col-12"><b>Add Price</b></a>
+                    <a type="button" href="{% url 'suppliers:update' supplier.id %}" class="btn btn-warning font-weight-bold mb-1 col-12"><b>Edit</b></a><br>
+                    <a type="button" href="{% url 'suppliers:delete' supplier.id %}" class="btn btn-danger font-weight-bold mb-1 col-12"><b>Delete</b></a><br>
+            </div>
+        </div>
+        <hr>
+    </div>
+    {% endfor %}
+</div>
+{% endblock body %}

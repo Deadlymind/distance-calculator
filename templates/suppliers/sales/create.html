@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block css %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://unpkg.com/osrm-backend@^6.0.1/osrm-backend.js"></script>
+
+  <style>
+    #map1, #map2 {
+      height: 200px;
+    }
+  </style>
+{% endblock css %}
+
+{% block body %}
+<div class="container mt-3">
+    <h1 class="text-center">Create Suppliers(Sales)</h1>
+    <hr>
+
+    <form id='sales_supplier_form' method="post" action="" enctype="multipart/form-data">{% csrf_token %}
+      <div class="form-row">
+        <div class="form-group col-md-12">
+          <label for="input_product">Product</label>
+          <select name='product' id="input_product" class="form-control" required>
+            <option disabled selected value>Select Product</option>
+            {% for product in products %}
+            <option value="{{product.id}}">{{product.name}}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <hr>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="input_company_name">Company Name</label>
+                <input required type="text" class="form-control" name='company_name' id="input_company_name" placeholder="" required>
+            </div>
+            <div class="form-group col-md-6">
+                <label required for="input_contact_name">Contact Name</label>
+                <input type="text" class="form-control" name="contact_name" id="input_contact_name" placeholder="" required>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="input_landline">Landline</label>
+                <input type="text" class="form-control" name="landline" id="input_landline" placeholder="">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="input_mobile">Mobile</label>
+                <input type="text" class="form-control" name="mobile" id="input_mobile" placeholder="">
+            </div>
+            <div class="form-group col-md-4">
+                <label for="input_email">Email</label>
+                <input required type="email" class="form-control" name="email" id="input_email" placeholder="">
+            </div>
+            <div class="form-group col-md-5">
+                <label for="input_identifier">Identifier</label>
+                <input type="text" class="form-control" name="identifier" id="input_identifier" placeholder="">
+            </div>
+            <div class="form-group col-md-7">
+                <label for="input_format"> Format</label>
+                <input type="text" class="form-control" name="format" id="input_format" placeholder="">
+            </div>
+            <div class="form-group col-md-12">
+                <label for="input_comments">Comments</label>
+                <textarea class='form-control' id="input_comments" name="comments" rows="4" cols="50"></textarea>
+            </div>
+          </div>
+          <hr>
+          <div class="form-row">
+
+            <div class="form-group col-md-8">
+              <div class="form-row row">
+              <label for="input_price" class="col-12">Price</label>
+                <input required type="number" class="form-control col-11" name="price" id="input_price" placeholder=""><span class="col-1 mt-2 text-bold text-lg">€</span>
+              </div>
+            </div>
+            <div class="form-group col-md-4" hidden>
+              <div class="form-row row">
+                <label for="input_price" class="col-12">Margin</label>
+                <input required type="number" class="form-control col-10" name="margin" id="input_margin" placeholder="" value="" step="0.01"><span class="col-2 mt-2 text-bold text-lg">€</span>
+                </div>
+              
+              <small id="passwordHelpBlock" class="form-text text-muted">Default Margin is <b><span class='text-bold' id="default_margin_text"></span></b></small>
+            </div>
+            <div class="form-group col-md-4">
+              <label for="input_price_type">Price Type</label>
+              <select id="input_price_type" name="price_type" class="form-control">
+                <option value="EXW">EXW</option>
+                <option value="DAP" selected>DAP</option>  
+              </select>
+              <small id="passwordHelpBlock" class="form-text text-muted">Switch to DAP for Destination Address</small>
+            </div>
+            <div class="form-group col-md-6">
+              <div class="form-row row">
+              <label for="input_weight_of_full_truck" class="col-12">Weight Of Full Truck</label>
+                <input required type="number" class="form-control col-11" name="weight_of_full_truck" id="input_weight_of_full_truck" placeholder=""><span class="col-1 mt-2 default_unit_text"></span>
+              </div>
+            </div>
+            <div class="form-group col-md-6">
+              <div class="form-row row">
+              <label for="input_transportational_cost" class="col-12">Transportation Cost</label>
+                <input required type="number" class="form-control col-11" name="transportational_cost" id="input_transportational_cost" placeholder="" disabled><span class="col-1 mt-2">Km</span>
+              </div>
+            </div>
+            <div class="form-group col-md-12">
+              <label for="input_region">Department</label>
+              <select id="input_region" name="region" class="form-control" required disabled>
+                <option disabled selected value>Department will be automatically updated, once you select the departure address</option>
+                {% for region in regions %}
+                <option value="{{region.id}}">{{region.name}} ({{region.country.name.title}})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="input_departure_address">Departure Address</label>
+              <input type="text" class="form-control" name="departure_address_lat" id="input_departure_address_lat" placeholder="Select Location On Map" hidden>
+              <input type="text" class="form-control" name="departure_address_lng" id="input_departure_address_lng" placeholder="Select Location On Map" hidden>
+              <div id="map1"></div>
+              <p id='departure_location_error_text' class="text col-12 text-center mt-1 text-italic text-danger"></p>
+            </div>
+            <div class="form-group col-md-6" id="div_destination_address">
+              <label for="input_destination_address">Destination Address</label>
+              <input type="text" class="form-control" name="destination_address_lat" id="input_destination_address_lat" placeholder="Select Location On Map" hidden>
+              <input type="text" class="form-control" name="destination_address_lng" id="input_destination_address_lng" placeholder="Select Location On Map" hidden>
+              <div id="map2"></div>
+              <p id='destination_location_error_text' class="text col-12 text-center mt-1 text-italic text-danger"></p>
+            </div>
+          </div>
+          <hr>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="input_certifications">Certifications</label>
+              <input type="File" name="certifications" class="" multiple="True" id="input_certifications">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="input_specifications">Specifications</label>
+              <input type="File" name="specifications" class="" multiple="True" id="input_specifications">
+            </div>
+          </div>
+          <hr>
+          <div class="col-12 mb-5">
+            <button type="submit" class="btn btn-success col-12">Add Supplier</button>
+          </div>
+        </div>
+      </form>
+</div>
+
+{% endblock body %}
+
+{% block js %}
+<script>
+  {% include 'suppliers/closest_region.html' %}
+  // MAP
+  current_marker1 = null;
+  current_marker2 = null;
+
+  var map1 = L.map('map1').setView([0, 0], 2);
+  L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map1);
+  L.Control.geocoder({
+    defaultMarkGeocode: false,
+    collapsed: false
+  }).on('markgeocode', function(e) {
+    if (current_marker1 !== null) {
+      map1.removeLayer(current_marker1);
+    }
+    current_marker1 = L.marker(e.geocode.center).addTo(map1);
+    map1.setView(e.geocode.center, 10);
+    console.log(e.geocode.center);
+    document.getElementById('input_departure_address_lat').value = e.geocode.center.lat;
+    document.getElementById('input_departure_address_lng').value = e.geocode.center.lng;
+
+    get_closest_region();
+
+  }).addTo(map1);
+
+  var map2 = L.map('map2').setView([0, 0], 2);
+  L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map2);
+  L.Control.geocoder({
+    defaultMarkGeocode: false,
+    collapsed: false
+  }).on('markgeocode', function(e) {
+    if (current_marker2 !== null) {
+      map2.removeLayer(current_marker2);
+    }
+    current_marker2 = L.marker(e.geocode.center).addTo(map2);
+    map2.setView(e.geocode.center, 10);
+    document.getElementById('input_destination_address_lat').value = e.geocode.center.lat;
+    document.getElementById('input_destination_address_lng').value = e.geocode.center.lng;
+  }).addTo(map2);
+
+  
+
+  // ON MAP CLICK
+  function onMap1Click(e) {
+    if (current_marker1 !== null) {
+      map1.removeLayer(current_marker1);
+    }
+
+    var marker = L.marker(e.latlng).addTo(map1);
+    console.log(e);
+    document.getElementById('input_departure_address_lat').value = e.latlng.lat;
+    document.getElementById('input_departure_address_lng').value = e.latlng.lng;
+    current_marker1 = marker;
+
+    get_closest_region();
+  }
+
+  function onMap2Click(e) {
+    if (current_marker2 !== null) {
+      map2.removeLayer(current_marker2);
+    }
+
+    var marker = L.marker(e.latlng).addTo(map2);
+    document.getElementById('input_destination_address_lat').value = e.latlng.lat;
+    document.getElementById('input_destination_address_lng').value = e.latlng.lng;
+    current_marker2 = marker;
+  }
+
+  map1.on('click', onMap1Click);
+  map2.on('click', onMap2Click);
+
+  // ON PRICE_TYPE, SHOW/HIDE DESTINATION_ADDRESS
+  $("#input_price_type").change(function(){
+    var selectedValue = $(this).val();
+    if (selectedValue == "EXW") {
+      $("#div_destination_address").hide();
+    } else {
+      $("#div_destination_address").show();
+      $('#input_weight_of_full_truck').attr('required', "required");
+    }
+  });
+
+  product_data = {
+    {% for product in products %}
+    {{product.id}}: {
+      "unit": "{{product.default_unit.name}}",
+      "margin": {{product.default_margin}}
+    },
+    {% endfor %}
+  }
+
+  region_data = {
+    {% for region in regions %}
+    {{region.id}}: {
+      "price": {{region.price}}
+    },
+    {% endfor %}
+  }
+
+  console.log(product_data);
+
+  $("#input_product").change(function(){
+    var selectedValue = $(this).val();
+    unit = product_data[selectedValue]['unit'];
+    margin = product_data[selectedValue]['margin'];
+    console.log(unit, margin)
+    $("#input_margin").val(margin);
+    $("#default_margin_text").text(margin);
+
+    $(".default_unit_text").each(function(index, element){
+      $(this).text(unit);
+    });
+
+  });
+
+  
+</script>
+<script>
+  $(document).ready(function() {
+    $("#sales_supplier_form").on('submit', function(event) {
+      isValid = true;
+      event.preventDefault();
+
+      if (!($("#input_departure_address_lat").val())) {
+        isValid = false;
+        $("#departure_location_error_text").text('Departure Location is required');
+      }
+
+      if ($("#input_price_type").val() == "DAP") {
+        if (!($("#input_destination_address_lat").val())) {
+          isValid = false;
+          $("#destination_location_error_text").text('Destination Location is required');
+        }
+      } 
+
+
+      if (isValid) {
+        $("#sales_supplier_form :disabled").removeAttr('disabled');
+        event.currentTarget.submit();  
+      } else {
+        event.preventDefault();
+        console.log("FORM INVALID");
+      }
+    })
+  });
+</script>
+{% endblock js %}

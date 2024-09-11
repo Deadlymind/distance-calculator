@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block css %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://unpkg.com/osrm-backend@^6.0.1/osrm-backend.js"></script>
+
+  <style>
+    #map1 {
+      height: 500px;
+    }
+  </style>
+{% endblock css %}
+
+
+{% block body %}
+<div class="container mt-3">
+    <h1 class="text-center">{{region.name}}</h1>
+    <form action="" method="post">{% csrf_token %}
+        <div class="form-group">
+            <label for="input_center">Center Of Department</label>
+            <input type="text" class="form-control" name="center" id="input_center" placeholder="Select Location On Map" value="{{region.center_lat}}, {{region.center_lng}}" required>
+            <input type="text" class="form-control" name="center_lat" id="input_center_lat" placeholder="Select Location On Map" hidden>
+            <input type="text" class="form-control" name="center_lng" id="input_center_lng" placeholder="Select Location On Map" hidden>
+            <div id="map1"></div>
+          </div>
+        <button class="btn btn-primary col-12" type="submit">Update Location</button>
+    </form>
+</div>
+{% endblock body %}
+
+
+{% block js %}
+<script>
+    current_marker1 = null;
+    var map1 = L.map('map1').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map1);
+    L.Control.geocoder({
+        defaultMarkGeocode: false,
+        collapsed: false
+    }).on('markgeocode', function(e) {
+        if (current_marker1 !== null) {
+        map1.removeLayer(current_marker1);
+        }
+        current_marker1 = L.marker(e.geocode.center).addTo(map1);
+        map1.setView(e.geocode.center, 10);
+        console.log(e.geocode.center);
+        document.getElementById('input_center_lat').value = e.geocode.center.lat;
+        document.getElementById('input_center_lng').value = e.geocode.center.lng;
+        document.getElementById('input_center').value = `${e.geocode.center.lat}, ${e.geocode.center.lng}`;
+
+    }).addTo(map1);
+
+    function onMap1Click(e) {
+        if (current_marker1 !== null) {
+        map1.removeLayer(current_marker1);
+        }
+
+        var marker = L.marker(e.latlng).addTo(map1);
+        console.log(e);
+        document.getElementById('input_center_lat').value = e.latlng.lat;
+        document.getElementById('input_center_lng').value = e.latlng.lng;
+        document.getElementById('input_center').value = `${e.latlng.lat}, ${e.latlng.lng}`;
+        current_marker1 = marker;
+    }
+    map1.on('click', onMap1Click);
+
+    current_marker1 = L.marker([
+        {{region.center_lat}}, {{region.center_lng}}
+    ]).addTo(map1)
+</script>
+{% endblock js %}

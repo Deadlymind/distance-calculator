@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+
+{% block body %}
+<div class="container">
+    <h1 class="text-center">Update Product</h1>
+    <form action="" method="post">{% csrf_token %}
+        <div class="form-group">
+            <label for="input_name">Name:</label>
+            <input type="text" class="form-control" value="{{product.name}}" name="name" id="input_name" placeholder="Chocolate, Milk, etc" required>
+        </div>
+        <div class="form-group">
+            <label for="input_unit" class="">Unit</label>
+            <div class="form-group form-row">
+            <select class="form-control col-10" id="input_unit" name="unit" required>
+                <option value={{product.default_unit.id}}>{{product.default_unit.name}}</option>
+                {% for unit in other_units %}
+                <option value={{unit.id}}>{{unit.name}}</option>
+                {% endfor %}
+            </select>
+            <a href="{% url 'products:unit_create' %}?next={% url 'products:update' product.id %}" class="btn btn-success col-2">Add Unit</a>
+        </div>
+    </div>
+        <div class="form-group">
+            <label for="input_unit">Default Margin</label>
+            <input type="number" class="form-control" value='{{product.default_margin}}' name="margin" id="input_margin" placeholder="" required>
+        </div>
+        <button class="btn btn-primary col-12" type="submit">Update Product</button>
+    </form>
+</div>
+{% endblock body %}

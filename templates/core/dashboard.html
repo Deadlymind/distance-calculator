@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+<style>
+  #map {
+    height: 400px;
+  }
+  .leaflet-popup-content{
+    width: 400px !important;
+  }
+  .destination-icon{
+
+  }
+</style>
+{% endblock css %}
+
+{% block body %}
+<div class="container mt-3">
+    <h1 class="text-center">Dashboard{% if request.user.is_superuser %}(Admin){% elif request.user.team == 'sourcing' %}(Sourcing){% elif request.user.team == 'sales' %}(Sales){% endif %}</h1>
+    <hr>
+    <form action="." method="get">
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label for="input_product">Product</label>
+                <select name='product' id="input_product" class="form-control" required>
+                    {% if selected_product %}
+                        <option selected value="{{selected_product.id}}">{{selected_product.name}}</option>
+                    {% else %}
+                        <option disabled selected value>Select Product</option>
+                    {% endif %}
+                {% for product in products %}
+                <option value="{{product.id}}">{{product.name}}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="input_product">Country</label>
+                <select name='country' id="input_country" class="form-control" required>
+                <option value="-1">All Countries</option>
+                {% if multiple_countries %}
+                {% elif selected_country %}
+                <option selected value={{selected_country.0.id}}>{{selected_country.0.name.title}}</option>
+                {% else %}
+                {% endif %}
+                {% for country in countries %}
+                <option value="{{country.id}}">{{country.name.title}}</option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-4">
+                <label for="input_product">Department</label>
+                <select name='region' id="input_region" class="form-control">
+                <option selected value>All Departments</option>
+                {% if selected_region %}
+                    <option selected value={{selected_region.id}}>{{selected_region.name}}</option>
+                {% endif %}
+                </select>
+            </div>
+            <div class="form-group col-md-12">
+                <button style="background-color: orange;" class="btn font-weight-bold text-center col-12">Look For Opportunities</button>
+            </div>
+        </div>
+    </form>
+    <hr>
+    {% if selected_country and selected_product %}
+    <div class="row">
+        <h6><img src="{% static 'markers/departure.png' %}" alt=""> Suppliers </h6>&nbsp;&nbsp;&nbsp;
+        <h6><img src="{% static 'markers/destination.png' %}" alt=""> Destination (Center Of Department) </h6>
+    </div>
+    {% endif %}
+    <div id="map"></div>
+    <hr>
+    <div class="col-12">
+        <div class="row">
+        {% for region in destination_markers %}
+            
+            <div class="col-{% if selected_region%}12{% else %}6{% endif %} mb-5 ">
+                <div class="media">
+                    <div class="media-body px-3">
+                        <h3 class="font-weight-bold text-center">{{region.name}}</h1>
+                        {% for region_id, offers_details in offers_details_by_region.items %}
+                        {% if region_id == region.id  %}
+                            {% include 'core/region_detail_table.html' %}
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="align-self-center">
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock body %}
+
+{% block js %}
+
+
+
+
+<script>
+    var destination_address_icon = L.icon({
+    iconUrl: '{% static "markers/destination.png" %}',
+    });
+    var departure_address_icon = L.icon({
+    iconUrl: '{% static "markers/departure.png" %}',
+    });
+    regions = {
+        "-1": [],
+        {% if selected_country %}
+        {{selected_country.0.id}}: [
+                {% for region in selected_country.0.get_regions %}
+                    { value: {{region.id}}, text: '{{region.name}}' },
+                {% endfor %}
+            ],  
+        {% endif %}
+        {% for country in countries %}
+            {{country.id}}: [
+                {% for region in country.get_regions %}
+                    { value: {{region.id}}, text: '{{region.name}}' },
+                {% endfor %}
+            ],  
+        {% endfor %}
+    }
+    console.log(regions);
+
+    $("#input_country").change(function(){
+        const selectedValue = $(this).val();
+        const $select2 = $('#input_region');
+        $select2.empty();
+
+        $select2.empty().append('<option selected value>All Departments</option>');
+        console.log(selectedValue)
+        console.log(regions[selectedValue])
+        regions[selectedValue].forEach(option => {
+                $select2.append(new Option(option.text, option.value));
+            });
+    })
+    {% if multiple_countries %}
+
+    {% elif selected_country %}
+    const selectedValue = $("#input_country").val();
+        const $select2 = $('#input_region');
+        regions[selectedValue].forEach(option => {
+                $select2.append(new Option(option.text, option.value));
+    });
+    {% endif %}
+</script>
+
+<script>
+    {% if selected_country and selected_product %}
+        var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        m1_text = "";
+        {% if destination_markers %}
+            {% for destination_marker in destination_markers %}
+                {% for region_id, offers in offers_details_by_region.items %}
+                    {% if region_id == destination_marker.id  %}
+                        {% if offers.M1 %}
+                        var marker_departure_{{offers.M1.id}} = L.marker([
+                                {{offers.M1.supplier.departure_address_lat}}, {{offers.M1.supplier.departure_address_lng}}
+                            ], {
+                                icon: new L.DivIcon({ 
+                                    className: 'destination-icon',
+                                    html: `
+                                        <span class="badge badge-light">{{offers.M1.supplier.price_exws|floatformat:1}} {{offers.M1.supplier.company_name}}</span>
+                                        <img width=24 height=35 class="my-div-image" src="{% static "markers/departure.png" %}"/>
+                                    `
+                                }),
+                                riseOnHover: true
+                            }){% if selected_region %}.bindPopup(
+                                `<span><span style="background-color: {{offers.M_COLOR_1}};" >&nbsp;&nbsp;&nbsp;&nbsp; </span> M1({{offers.M1.offer_m_price|floatformat:2}}) - {{offers.M1.supplier.company_name}}</span>&nbsp;<a href="{% url 'offers:detail' offers.M1.id %}" class='btn btn-warning text-center text-light btn-sm'>View Offer</a>`
+                        ){% endif %}.addTo(map);
+                        
+                        m1_text_{{destination_marker.id}} = "{%if offers.M1 %}{{offers.M1.offer_m_price|floatformat:1}} {{offers.M1.supplier.company_name|truncatechars:10}}{% endif %}"
+                        m1_text_color_{{destination_marker.id}} = "{{offers.M_COLOR_1}}";
+                        {% endif %}
+                        {% if offers.M2 %}
+                        var marker_departure_{{offers.M2.id}} = L.marker([
+                                {{offers.M2.supplier.departure_address_lat}}, {{offers.M2.supplier.departure_address_lng}}
+                            ], {                                
+                                icon: new L.DivIcon({
+                                    className: 'destination-icon',
+                                    html: `
+                                    <span class="badge badge-light">{{offers.M2.supplier.price_exws}} {{offers.M2.supplier.company_name}}</span>
+                                        <img width=24 height=35 class="my-div-image" src="{% static "markers/departure.png" %}"/>
+                                    `
+                                }),
+                                riseOnHover: true}){% if selected_region %}.bindPopup(
+                                
+                                `<span><span style="background-color: {{offers.M_COLOR_2}};" >&nbsp;&nbsp;&nbsp;&nbsp; </span> M2({{offers.M2.offer_m_price|floatformat:2}}) - {{offers.M2.supplier.company_name}}</span>&nbsp;<a href="{% url 'offers:detail' offers.M2.id %}" class='btn btn-warning text-center text-light btn-sm'>View Offer</a>`
+                        ){% endif %}.addTo(map);
+                        {% endif %}
+                        {% if offers.M3 %}
+                        var marker_departure_{{offers.M3.id}} = L.marker([
+                                {{offers.M3.supplier.departure_address_lat}}, {{offers.M3.supplier.departure_address_lng}}
+                            ], {
+                                icon: new L.DivIcon({
+                                    className: 'destination-icon',
+                                    html: `
+                                    <span class="badge badge-light">{{offers.M3.supplier.price_exws}} {{offers.M3.supplier.company_name}}</span>
+                                        <img width=24 height=35 class="my-div-image" src="{% static "markers/departure.png" %}"/>
+                                    `
+                                }),
+                                riseOnHover: true
+                            }){% if selected_region %}.bindPopup(
+                                `<span><span style="background-color: {{offers.M_COLOR_3}};" >&nbsp;&nbsp;&nbsp;&nbsp; </span> M3({{offers.M3.offer_m_price|floatformat:2}}) - {{offers.M3.supplier.company_name}}</span>&nbsp;<a href="{% url 'offers:detail' offers.M3.id %}" class='btn btn-warning text-center text-light btn-sm'>View Offer</a>`
+                        ){% endif %}.addTo(map);
+                        {% endif %}
+                        {% if offers.FP1 %}
+                        var marker_departure_{{offers.FP1.id}} = L.marker([
+                                {{offers.FP1.supplier.departure_address_lat}}, {{offers.FP1.supplier.departure_address_lng}}
+                            ], {
+                                icon: new L.DivIcon({
+                                    className: 'destination-icon',
+                                    html: `
+                                    <span class="badge badge-light">{{offers.M1.supplier.exws}} {{offers.M1.supplier.company_name}}</span>
+                                        <img width=24 height=35 class="my-div-image" src="{% static "markers/departure.png" %}"/>
+                                    `
+                                }),
+                                riseOnHover: true
+                            }).bindPopup(
+                                `<span>FP1 ({{offers.FP1.offer_m_price|floatformat:2}}) - {{offers.FP1.supplier.company_name}}</span>&nbsp;<a href="{% url 'offers:detail' offers.FP1.id %}" class='btn btn-warning text-center text-light btn-sm'>View Offer</a>`
+                        ).addTo(map);
+                        {% endif %}
+                    {% endif  %}
+                {% endfor %}
+            {% endfor %}
+            {% for destination_marker in destination_markers %}
+            var marker_destination_{{destination_marker.id}} = L.marker([
+                    {{destination_marker.center_lat}}, {{destination_marker.center_lng}}
+                ], {
+                    icon: new L.DivIcon({
+                        className: 'destination-icon',
+                        html: `
+                            <span class="badge" style="background-color:${m1_text_color_{{destination_marker.id}}}">${m1_text_{{destination_marker.id}}}</span>
+                            <img width=24 height=35 class="my-div-image" src="{% static "markers/destination.png" %}"/>
+                        `
+                    }),
+                    riseOnHover: true
+                }).bindPopup(
+                    {% for region_id, offers_details in offers_details_by_region.items %}
+                        {% if region_id == destination_marker.id %}
+                    `
+                    <h6 class='text-center'>{{destination_marker.name}}</h6><hr>
+                        {% include 'core/region_detail_table.html' %}
+                    `
+                    {% endif %}
+                    {% endfor %}
+                ).addTo(map);
+            {% endfor %}
+
+            var group = L.featureGroup(
+                [{% for destination_marker in destination_markers %}marker_destination_{{destination_marker.id}}, {% endfor %}
+                    {%for offers in offers_details_by_region.values %}
+                        {% if offers.M1 %}marker_departure_{{offers.M1.id}},{% endif %} 
+                        {% if offers.M2 %}marker_departure_{{offers.M2.id}},{% endif %} 
+                        {% if offers.M3 %}marker_departure_{{offers.M3.id}},{% endif %} 
+                    {%endfor%}
+                ]
+            );
+            console.log(group);
+            map.fitBounds(group.getBounds());
+
+        {% endif %}
+    {% endif %}
+  </script>
+
+{% endblock js  %}
