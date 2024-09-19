@@ -7,3 +7,4 @@ tzdata==2024.1
 geopy
 osmx
 osmnx
+mapbox
