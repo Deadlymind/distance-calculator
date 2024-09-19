@@ -120,7 +120,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -156,3 +156,7 @@ EMAIL_HOST_PASSWORD='yogdaujhajrrfdyw'
 AUTH_USER_MODEL = 'accounts.User'
 
 LOGIN_URL = '/user/login/'
+
+
+MAPBOX_ACCESS_TOKEN = "pk.eyJ1Ijoic2FtaTIwMjQiLCJhIjoiY20xNHdrZHVoMDJuMjJrc2pzYzRxc3gwZSJ9.dedAS2SGVF6478Dt1nkiew"
+os.environ['MAPBOX_ACCESS_TOKEN'] = MAPBOX_ACCESS_TOKEN
