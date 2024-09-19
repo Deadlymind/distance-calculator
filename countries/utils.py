@@ -1,4 +1,7 @@
 import math
+from mapbox import Geocoder
+
+from django.conf import settings
 
 def haversine_distance(lat1, lng1, lat2, lng2):
     # Radius of the Earth in km
@@ -25,10 +28,26 @@ def closest_location(lat, lng, locations):
     for location in locations:
         loc_lat, loc_lng = location.center_lat, location.center_lng
         distance = haversine_distance(lat, lng, loc_lat, loc_lng)
-        print(location, distance)
+        # print(location, distance)
         
         if distance < min_distance:
             min_distance = distance
             closest_loc = location
     
     return closest_loc
+
+def get_address_coordinates_from_mapbox(address_text):
+    geocoder = Geocoder(access_token=settings.MAPBOX_ACCESS_TOKEN)
+    resp = geocoder.forward(address_text)
+
+    if resp.status_code == 200:
+        data = resp.json()
+        if data['features']:
+            coordinates = data['features'][0]['geometry']['coordinates']
+            return {
+                "lat": coordinates[1],
+                "lng": coordinates[0],
+            }
+
+    return None
+        

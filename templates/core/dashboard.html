@@ -194,7 +194,7 @@
                                 icon: new L.DivIcon({
                                     className: 'destination-icon',
                                     html: `
-                                    <span class="badge badge-light">{{offers.M2.supplier.price_exws}} {{offers.M2.supplier.company_name}}</span>
+                                    <span class="badge badge-light">{{offers.M2.supplier.price_exws|floatformat:1}} {{offers.M2.supplier.company_name}}</span>
                                         <img width=24 height=35 class="my-div-image" src="{% static "markers/departure.png" %}"/>
                                     `
                                 }),
@@ -210,7 +210,7 @@
                                 icon: new L.DivIcon({
                                     className: 'destination-icon',
                                     html: `
-                                    <span class="badge badge-light">{{offers.M3.supplier.price_exws}} {{offers.M3.supplier.company_name}}</span>
+                                    <span class="badge badge-light">{{offers.M3.supplier.price_exws|floatformat:1}} {{offers.M3.supplier.company_name}}</span>
                                         <img width=24 height=35 class="my-div-image" src="{% static "markers/departure.png" %}"/>
                                     `
                                 }),
