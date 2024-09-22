@@ -1,4 +1,5 @@
 import openpyxl
+from geopy.geocoders import Nominatim
 from datetime import datetime
 
 from django.core.management.base import BaseCommand
@@ -101,6 +102,26 @@ class Command(BaseCommand):
         else:
             raise Exception("ADDRESS NOT FOUND")
 
+    def get_arrival_address_coordinates(self, address):
+        if "None" in address:
+            raise Exception(f"ARRIVAL ADDRESS CANNOT BE NULL ON DAPS")
+        geolocator = Nominatim(user_agent="Map")
+        location = geolocator.geocode(address)
+        if location:
+            return {
+                "latitude": location.latitude,
+                "longitude": location.longitude,
+            }
+        else:
+            print("OSM ADDRESS NOT FOUND, NOW USING MAPBOX TO FIND ADDRESS")
+            location_mapbox = get_address_coordinates_from_mapbox(address)
+            return {
+                "latitude": location_mapbox['lat'],
+                "longitude": location_mapbox['lng'],
+            }
+            # raise Exception(f"ADDRESS NOT FOUND {address}")
+
+
     def handle(self, *args, **options):
         self.regions = Regions.objects.all()
         self.suppliers_data = []
@@ -149,8 +170,8 @@ class Command(BaseCommand):
                     exwb = calculate_price_exwb_from_exws(exws, product.default_margin)
 
                 elif supplier_data['price_type'] == "DAPS":
-                    arrival_address = self.get_address_coordinates(
-                        f"{supplier_data['arrival_address']} {supplier_data['country']}"
+                    arrival_address = self.get_arrival_address_coordinates(
+                        f"{supplier_data['arrival_address']}, {supplier_data['department']}, {supplier_data['country']}"
                     )
                     distance_price = calculate_road_distance_price(
                         [supplier.departure_address_lat, supplier.departure_address_lng],
