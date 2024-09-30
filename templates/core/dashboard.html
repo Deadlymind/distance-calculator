@@ -226,14 +226,14 @@
                                 icon: new L.DivIcon({
                                     className: 'destination-icon',
                                     html: `
-                                    <span class="badge badge-light">{{offers.M1.supplier.exws}} {{offers.M1.supplier.company_name}}</span>
+                                    <span class="badge badge-light">{{offers.FP1.supplier.exws}} {{offers.FP1.supplier.company_name}}</span>
                                         <img width=24 height=35 class="my-div-image" src="{% static "markers/departure.png" %}"/>
                                     `
                                 }),
                                 riseOnHover: true
-                            }).bindPopup(
+                            }){% if selected_region %}.bindPopup(
                                 `<span>FP1 ({{offers.FP1.offer_m_price|floatformat:2}}) - {{offers.FP1.supplier.company_name}}</span>&nbsp;<a href="{% url 'offers:detail' offers.FP1.id %}" class='btn btn-warning text-center text-light btn-sm'>View Offer</a>`
-                        ).addTo(map);
+                        ){% endif %}.addTo(map);
                         {% endif %}
                     {% endif  %}
                 {% endfor %}

@@ -8,8 +8,11 @@ from countries.models import Regions
 from products.models import Product, Units
 from suppliers.models import Suppliers, SupplierPrices
 from accounts.models import User
-from suppliers.utils import calculate_price_exwb_from_exws, calculate_price_exws_from_daps, \
+from suppliers.utils import (
+    calculate_price_exwb_from_exws, calculate_price_exws_from_daps,
+    calculate_price_exws_from_exwb, calculate_price_exwb_from_dapb,
     calculate_road_distance_price
+)
 from offers.utils import generate_offers
 from countries.utils import get_address_coordinates_from_mapbox, \
     closest_location
@@ -169,6 +172,10 @@ class Command(BaseCommand):
                     exws = supplier_data['current_price']
                     exwb = calculate_price_exwb_from_exws(exws, product.default_margin)
 
+                elif supplier_data['price_type'] == "EXWB":
+                    exwb = supplier_data['current_price']
+                    exws = calculate_price_exws_from_exwb(exwb, product.default_margin)
+
                 elif supplier_data['price_type'] == "DAPS":
                     arrival_address = self.get_arrival_address_coordinates(
                         f"{supplier_data['arrival_address']}, {supplier_data['department']}, {supplier_data['country']}"
@@ -182,6 +189,23 @@ class Command(BaseCommand):
                         supplier_data['current_price'], distance_price, supplier_data['weight_of_full_truck']
                     )
                     exwb = calculate_price_exwb_from_exws(exws, product.default_margin)
+
+                elif supplier_data['price_type'] == "DAPB":
+                    arrival_address = self.get_arrival_address_coordinates(
+                        f"{supplier_data['arrival_address']}, {supplier_data['department']}, {supplier_data['country']}"
+                    )
+                    distance_price = calculate_road_distance_price(
+                        [supplier.departure_address_lat, supplier.departure_address_lng],
+                        [arrival_address['latitude'], arrival_address['longitude']],
+                        supplier.region
+                    )
+                    exwb = calculate_price_exwb_from_dapb(
+                        supplier_data['current_price'], distance_price, supplier_data['weight_of_full_truck']
+                    )
+                    exws = calculate_price_exws_from_exwb(exwb, product.default_margin)
+
+                if exwb < 0:
+                    raise Exception(f"PRICE CANNOT BE LESS THAN 0")
 
                 supplier.price_exws = exws
                 supplier.price_exwb = exwb

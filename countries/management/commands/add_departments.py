@@ -1,4 +1,5 @@
-from regions import data
+from geopy.geocoders import Nominatim
+from regions import data_v2 as data
 from countries.models import Countries, Regions
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -6,165 +7,152 @@ from offers.utils import generate_offers_for_new_departments
 
 
 class Command(BaseCommand):
-    help = 'Get Information On Dribble Products'
 
-    def get_dribble_url(self, dribble_product_id):
-        return f"https://dribbble.com/shots/{dribble_product_id}"
+    def get_center_of_department_coordinates(self, address):
+        geolocator = Nominatim(user_agent="Map1")
+        location = geolocator.geocode(address)
+        return location.latitude, location.longitude
 
-    def generate_departments(self, country, departments, key='department'):
+    def generate_departments(self, country, departments, key='name:en'):
         country.regions.all().delete()  # DELETING ALL PREVIOUS REGIONS.
         for department in departments:
+            lat, lng = self.get_center_of_department_coordinates(department[key])
             r = Regions.objects.create(
                 country=country,
                 name=department[key],
-                center_lat=department['coordinates']['latitude'],
-                center_lng=department['coordinates']['longitude'],
+                center_lat=lat,
+                center_lng=lng,
             )
-            generate_offers_for_new_departments(r)
+            # generate_offers_for_new_departments(r)
             print(r)
 
 
     def handle(self, *args, **options):
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='france')[0], data.france
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='germany')[0], data.germany
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='albania')[0], data.albania
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='bulgaria')[0], data.bulgaria
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='netherlands')[0], data.netherlands
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='italy')[0], data.italy
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='spain')[0], data.spain
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='lithuainia')[0], data.lithuainia
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='croatia')[0], data.croatia
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='austria')[0], data.austria
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='czech')[0], data.czech
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='poland')[0], data.poland
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='portugal')[0], data.portugal
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='ukraine')[0], data.ukraine
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='turkey')[0], data.turkey
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='latvia')[0], data.latvia
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='serbia')[0], data.serbia
-        # )
-        # self.generate_departments(
-        #     Countries.objects.get_or_create(name='russia')[0], data.russia
-        # )
         with transaction.atomic():
             self.generate_departments(
-                Countries.objects.get_or_create(name='United Kingdom')[0], data.uk_counties, 'county'
+                Countries.objects.get_or_create(name='france')[0], data.france, 'name'
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Switzerland')[0], data.switzerland_cantons, 'canton'
+                Countries.objects.get_or_create(name='albania')[0], data.albania
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Sweden')[0], data.sweden_counties, 'county'
+                Countries.objects.get_or_create(name='armenia')[0], data.armenia
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Slovenia')[0], data.slovenia_regions, 'region'
+                Countries.objects.get_or_create(name='austria')[0], data.austria
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Slovakia')[0], data.slovakia_regions, 'region'
+                Countries.objects.get_or_create(name='azerbaijan')[0], data.azerbaijan
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='San Marino')[0], data.san_marino_castelli, 'castello'
+                Countries.objects.get_or_create(name='bosnia')[0], data.bosnia
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Romania')[0], data.romania_counties, 'county'
+                Countries.objects.get_or_create(name='belgium')[0], data.belgium
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Norway')[0], data.norway_counties, 'county'
+                Countries.objects.get_or_create(name='bulgaria')[0], data.bulgaria
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='North Macedonia')[0], data.north_macedonia_regions, 'region'
+                Countries.objects.get_or_create(name='belarus')[0], data.belarus
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Monaco')[0], data.monaco_quarters, 'quarter'
+                Countries.objects.get_or_create(name='switzerland')[0], data.switzerland
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Moldova')[0], data.moldova_districts, 'district'
+                Countries.objects.get_or_create(name='cyprus')[0], data.cyprus
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Luxembourg')[0], data.luxembourg_cantons, 'canton'
+                Countries.objects.get_or_create(name='czechia')[0], data.czechia
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Liechtenstein')[0], data.liechtenstein_municipalities, 'municipality'
+                Countries.objects.get_or_create(name='germany')[0], data.germany
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Kosovo')[0], data.kosovo_districts, 'district'
+                Countries.objects.get_or_create(name='denmark')[0], data.denmark
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Kazakhstan')[0], data.kazakhstan_regions, 'region'
+                Countries.objects.get_or_create(name='estonia')[0], data.estonia
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Ireland')[0], data.ireland_counties, 'county'
+                Countries.objects.get_or_create(name='spain')[0], data.spain
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Iceland')[0], data.iceland_regions, 'region'
+                Countries.objects.get_or_create(name='finland')[0], data.finland
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Hungary')[0], data.hungary_counties, 'county'
+                Countries.objects.get_or_create(name='united_kingdom')[0], data.united_kingdom, 'name'
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Greece')[0], data.greece_regions, 'region'
+                Countries.objects.get_or_create(name='georgia')[0], data.georgia
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Finland')[0], data.finland_regions, 'region'
+                Countries.objects.get_or_create(name='greece')[0], data.greece
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Estonia')[0], data.estonia_counties, 'county'
+                Countries.objects.get_or_create(name='croatia')[0], data.croatia
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Denmark')[0], data.denmark_regions, 'region'
+                Countries.objects.get_or_create(name='hungary')[0], data.hungary
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Cyprus')[0], data.cyprus_districts, 'district'
+                Countries.objects.get_or_create(name='ireland')[0], data.ireland
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Bosnia')[0], data.bosnia_rs_regions, 'region'
+                Countries.objects.get_or_create(name='iraq')[0], data.iraq
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Belgium')[0], data.belgium_provinces, 'province'
+                Countries.objects.get_or_create(name='iceland')[0], data.iceland
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Herzegovina')[0], data.herzegovina_cities, 'city'
+                Countries.objects.get_or_create(name='italy')[0], data.italy
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Belarus')[0], data.belarus_regions, 'region'
+                Countries.objects.get_or_create(name='liechtenstein')[0], data.liechtenstein
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Armenia')[0], data.armenia_provinces, 'province'
+                Countries.objects.get_or_create(name='morocco')[0], data.morocco
             )
             self.generate_departments(
-                Countries.objects.get_or_create(name='Andorra')[0], data.andorra_parishes, 'parish'
+                Countries.objects.get_or_create(name='moldova')[0], data.moldova
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='montenegro')[0], data.montenegro
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='netherlands')[0], data.netherlands
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='norway')[0], data.norway
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='poland')[0], data.poland
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='portugal')[0], data.portugal
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='romania')[0], data.romania
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='serbia')[0], data.serbia
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='russia')[0], data.russia
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='sweden')[0], data.sweden
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='slovakia')[0], data.slovakia
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='syria')[0], data.syria
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='turkey')[0], data.turkey
+            )
+            self.generate_departments(
+                Countries.objects.get_or_create(name='ukraine')[0], data.ukraine
             )
             print("COMPLETED")        
