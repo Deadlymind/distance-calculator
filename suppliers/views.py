@@ -216,7 +216,7 @@ class SuppliereNewPriceCreateView(View):
         print(request.POST)
         supplier = Suppliers.objects.get(id=pk)
 
-        price_data = calculate_price_from_sales({
+        price_data = calculate_price_from_source({
             "price_type": request.POST.get("price_type"),
             "margin": supplier.product.default_margin,
             "departure_address_lat": supplier.departure_address_lat,
@@ -254,8 +254,10 @@ class SupplierUpdateView(View):
             return redirect("accounts:login")
 
         supplier = Suppliers.objects.get(id=pk)
+        supplier_prices = supplier.get_supplier_prices()
         return render(request, 'suppliers/update.html', {
-            "supplier": supplier
+            "supplier": supplier,
+            "supplier_prices": supplier_prices
         })
 
     def post(self, request, pk):

@@ -1,5 +1,21 @@
 {% extends 'base.html' %}
+{% load static %}
 
+{% block css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+     crossorigin=""/>
+     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+     crossorigin=""></script>
+
+<style>
+  #map {
+    height: 300px;
+    width: 100%;
+  }
+</style>
+{% endblock css %}
 
 {% block body %} 
 <div class="container mt-3">
@@ -38,9 +54,101 @@
                 <label for="input_comments">Comments</label>
                 <textarea class='form-control' id="input_comments" name="comments" rows="4" cols="50"></textarea>
             </div>
+            <div class="form-row col-12">
+                <div class="form-group col-md-6">
+                  <div class="form-row row">
+                  <label for="input_price" class="col-12">Buying Price(EXWB)</label>
+                    <input required type="number" class="form-control col-11" name="price" id="input_price" placeholder="" value="{{supplier.price_exwb|floatformat:2}}" disabled><span class="col-1 mt-2 text-bold text-lg">€</span>
+                  </div>
+                </div>
+                <div class="form-group col-md-6">
+                  <div class="form-row row">
+                  <label for="input_price" class="col-12">Selling Price</label>
+                    <input required type="number" class="form-control col-11" name="price" id="input_price" placeholder="" value="{{supplier.price_exws|floatformat:2}}" disabled><span class="col-1 mt-2 text-bold text-lg">€</span>
+                  </div>
+                </div>
+                <div class="form-group col-md-6">
+                  <div class="form-row row">
+                  <label for="input_price" class="col-12">Product Margin</label>
+                    <input required type="number" class="form-control col-11" name="price" id="input_price" placeholder="" value="{{supplier.product.default_margin|floatformat:2}}" disabled></span>
+                  </div>
+              </div>
+                <div class="form-group col-md-6">
+                  <div class="form-row row">
+                  <label for="input_price" class="col-12">Weight Of Full Truck</label>
+                    <input required type="number" class="form-control col-11" name="price" id="input_price" placeholder="" value="{{supplier.weight_of_full_truck|floatformat:2}}" disabled></span>
+                  </div>
+              </div>
+                <div class="form-row col-12">
+                    <div id="map">
+                    </div>
+                </div>
+          <hr>
+          <div class="form-row col-12">
+            <div class="form-group col-md-6">
+              <label for="input_certifications">Certifications</label>
+              {% for certification in offer.supplier.certifications.all %}
+                <br><a href="{{certification.file.url}}">{{certification.file.name}}</a>
+              {% endfor %}
+            </div>
+            <div class="form-group col-md-6">
+              <label for="input_specifications">Specifications</label>
+                {% for specification in offer.supplier.specifications.all %}
+                <br><a href="{{specification.file.url}}">{{specification.file.name}}</a>
+              {% endfor %}
+            </div>
+          </div>
+          <hr>
+        </div>
+        {% if supplier_prices %}
+        <h2 class="text-center">Price History</h2>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Added By</th>
+              <th scope="col">Selling Price</th>
+              <th scope="col">Buying Price</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for prices in supplier_prices %}
+              <tr>
+                <td>{{prices.added_on.date}}</td>
+                <td>{{prices.added_by.username}}</td>
+                <td>{{prices.price_exws|floatformat:2}}</td>
+                <td>{{prices.price_exwb|floatformat:2}}</td>
+              </tr>
+              {% endfor %}
+            
+          </tbody>
+        </table>
+        {% endif %}
           </div>
           <div class="col-12"> <button class="btn btn-primary col-12">Save</button></div>
         </div>
     </form>
 </div>
 {% endblock body %}
+
+{% block js %}
+<script>
+    var departure_address_icon = L.icon({
+    iconUrl: '{% static "markers/departure.png" %}',
+    });
+  
+    var map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var marker_departure = L.marker([
+      {{supplier.departure_address_lat}}, {{supplier.departure_address_lng}}
+    ], {icon: departure_address_icon}).bindPopup("Departure").addTo(map);
+
+    groups = L.featureGroup([marker_departure, marker_departure]);
+    map.fitBounds(groups.getBounds());
+    console.log("MAPS")
+  
+</script>
+{% endblock js %}
